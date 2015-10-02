@@ -89,6 +89,7 @@ def calc_svm(x,y,z,w):
         for i in range(0,len(x)):
                 svm += ((x[i]**2)+(y[i]**2)+(z[i]**2))
         return sqrt(svm)/w
+    
 def calc_max_f(x):
         f_x, X = calc_fft(x, 33, 128)
 
@@ -98,11 +99,12 @@ def calc_max_f(x):
                 
         magX = magX[2:int(len(x)/2 +1)]
         mag, f = max(magX), numpy.argmax(magX)
-        f+=2
+        f+=3 #versao a atualizada
+        #f+=2 #versao antiga
         #como os indices do python funcionam de forma diferente, aqui o valor
         #sera 1 a menos do que no matlab, mas como e um indice, por enquanto
         #deixo assim. Dependendo do uso de f posteriormente talvez tenha que mudar
-        return f, mag
+        return f
 
 def vetor_caracteristicas(x, y, z, w):
         vetor = []
@@ -114,11 +116,11 @@ def vetor_caracteristicas(x, y, z, w):
         vetor.append(calc_dp(y))
         vetor.append(calc_variacao(x))
         vetor.append(calc_seqsmovimento(y, 5))
-        vetor.append(calc_max_f(x)[1])
+        vetor.append(calc_max_f(x))
         vetor.append(calc_svm(x,y,z,w))
         vetor.append(calc_seqsmovimento(z, 5))
         vetor.append(calc_seqsmovimento(x, 5))
-        vetor.append(calc_max_f(y)[1])
+        vetor.append(calc_max_f(y))
         vetor.append(calc_sma(x,y,z,w))
         vetor.append(calc_media(z))
         vetor.append(calc_variacao(z))
@@ -207,35 +209,14 @@ def carrega_dados(arquivo):
         X=[]
         Y=[]
         Z=[]
+        tempos = []
         for i,linha in enumerate(dados):
                 listadados = linha.split('|')
                 X.append(int(listadados[3]))
                 Y.append(int(listadados[4]))
                 Z.append(int(listadados[5]))
-        return X,Y,Z
-
-def time_test2():
-        arquivo = raw_input("Digite o nome do arquivo de dados a ser utilizado\n>")
-        start=datetime.now()
-        X,Y,Z = carrega_dados(arquivo)
-        janelasX = obtem_janelas(X,128,64)
-        janelasY = obtem_janelas(Y,128,64)
-        janelasZ = obtem_janelas(Z,128,64)
-        vetores_caracteristicas = []
-        for i in range(len(janelasX)):
-                vetores_caracteristicas.append(normaliza_caracteristica(vetor_caracteristicas(janelasX[i],janelasY[i],janelasZ[i],w)))
-        done = datetime.now()
-        deltat = done-start
-        return deltat.total_seconds(),vetores_caracteristicas
-
-#a,b = time_test2()
-#print(a)
-"""for j in range(len(b)):
-        print('janela %s' %(j+1))
-        for i in b[j]:
-                print('%.4f' %(i))
-        print('\n')
-        """
+                tempos.append(listadados[0])
+        return X,Y,Z,tempos
         
 def carrega_dados2(arquivo):
         """Abre um arquivo de dados e retorna 3 vetores: x,y,z, com tantos
@@ -246,12 +227,12 @@ def carrega_dados2(arquivo):
         Y=[]
         Z=[]
         mov=[]
-        for i, linha in enumerate(dados):
+        for i,linha in enumerate(dados):
                 listadados = linha.split('|')
-                X.append(int(listadados[4]))
-                Y.append(int(listadados[5]))
-                Z.append(int(listadados[6]))
-                mov.append(int(listadados[7]))
+                X.append(int(listadados[5]))
+                Y.append(int(listadados[6]))
+                Z.append(int(listadados[7]))
+                mov.append(int(listadados[8]))
         return X,Y,Z,mov
     
 def ativ(arquivo):
