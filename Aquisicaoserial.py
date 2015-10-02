@@ -2,8 +2,7 @@ import serial
 import array
 import struct
 from datetime import datetime
-def makeByteString(arr):
-    return array.array('B', arr).tostring()
+
 
 def startAccessPoint(ser):
     ser.write(makeByteString([0xFF, 0x07, 0x03]))
@@ -11,14 +10,17 @@ def startAccessPoint(ser):
     print("AccessPoint Started")
     ser.read(3)
 
+
 def stopAccessPoint(ser):
     ser.write(makeByteString([0xFF, 0x09, 0x03]))
     print("AccessPoint Stopped")
     ser.read(3)
-    
+
+
 def getProductID(ser):
     ser.write(makeByteString([0xff, 0x20, 0x07, 0x00, 0x00, 0x00, 0x00]))
     return ser.read(7)
+
 
 def getStatus(ser):
     ser.write(makeByteString([0xff, 0x00, 0x04, 0x00]))
@@ -53,17 +55,28 @@ def getData(ser):
     ser.write('\xff\x08\x07\x00\x00\x00\x00')
     return struct.unpack("!bbbbbbb", ser.read(7))
 
-def writeData(file_name, data, index):
-    data_file = open(file_name, "a")
-    hora = datetime.now().time().isoformat()
-    data_file.write(hora[0:8]+":"+hora[9:12]+" | "+str(index)+"|")
-    data_file.write("|"+str(data[4])+"|"+str(data[5])+"|"+str(data[6])+"\n")
-    data_file.close()
+
+def obtem_amostra(ser, amostra):
+    data = getData(ser)
+    if data[3] == 1:
+        amostra[0] = data[4]
+        amostra[1] = data[5]
+        amostra[2] = data[6]
+        return True
+    else:
+        return False
+
+
+def obtem_amostra(ser, amostra, timeout):
+    if True ==  obtem_amostra(ser,amostra):
+        return True
+    else:
+        return False
+
 
 def aquisicao(file_name, numero_dados, filtro = 1):
-
     ser = serial.Serial('/dev/ttyACM0', 115200, timeout = 1)
-    #print("IsOpen = %s" %(ser.isOpen()))
+
     startAccessPoint(ser)
     status = getStatus(ser)
     if status == '\x03':
@@ -116,15 +129,24 @@ def aquisicao(file_name, numero_dados, filtro = 1):
         print('Simplicit not linked, try again')
         stopAccessPoint(ser)
         ser.close()
-        
-        
 
-"""
-startAccessPoint()
-raw_input("Please turn your watch to sync mode and turn on the transceiver (though if the transciever is already on you may have to turn it off then on again), then press enter...")
 
-while True:
-	data = read_test()
-	if data[3]==1:
-		print("x=%3d   y=%3d   z=%3d" %(data[4],data[5],data[6]))
-"""
+def makeByteString(arr):
+   """makeByteString function
+   
+   Args: 
+      arr (array): Array de entrada que será convertido para um novo array com tipos unsigned char
+   
+   Returns:
+      Array convertido para unsigned char.
+   
+   """
+   return array.array('B', arr).tostring()
+
+
+def writeData(file_name, data, index):
+    data_file = open(file_name, "a")
+    hora = datetime.now().time().isoformat()
+    data_file.write(hora[0:8]+":"+hora[9:12]+" | "+str(index)+"|")
+    data_file.write("|"+str(data[4])+"|"+str(data[5])+"|"+str(data[6])+"\n")
+    data_file.close()

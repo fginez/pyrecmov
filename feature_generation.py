@@ -162,13 +162,14 @@ def normaliza_caracteristica(dados, parametros):
 def obtem_janelas(sinal, tamanho_janela, sobreposicao):
         #obtem_janelas Segmenta o sinal fornecido em janelas com sobreposicao
         #Entradas:
-        #sinal : strem de dados
+        #sinal : stream de dados
         #tamanho: tamanho da janela (128, 256, 512....)
         #sobreposicao: quantidade de amostras superpostas
         #Saida:
         #amostras_janeladas : matriz com as janelas
 
         #inicializacao das variaveis
+        
         pos_inicio = 0
         pos_fim = pos_inicio+tamanho_janela
         tamanho_sinal = len(sinal)
@@ -249,5 +250,3 @@ def ativ(arquivo):
                 tu.append(i)
         ativ.append(tu)
     return ativ
-            
-                    
