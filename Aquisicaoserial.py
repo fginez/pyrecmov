@@ -116,15 +116,3 @@ def aquisicao(file_name, numero_dados, filtro = 1):
         print('Simplicit not linked, try again')
         stopAccessPoint(ser)
         ser.close()
-        
-        
-
-"""
-startAccessPoint()
-raw_input("Please turn your watch to sync mode and turn on the transceiver (though if the transciever is already on you may have to turn it off then on again), then press enter...")
-
-while True:
-	data = read_test()
-	if data[3]==1:
-		print("x=%3d   y=%3d   z=%3d" %(data[4],data[5],data[6]))
-"""
