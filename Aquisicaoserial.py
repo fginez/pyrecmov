@@ -1,4 +1,3 @@
-import serial
 import array
 import struct
 from datetime import datetime
@@ -6,14 +5,14 @@ from datetime import datetime
 
 def startAccessPoint(ser):
     ser.write(makeByteString([0xFF, 0x07, 0x03]))
-    raw_input("Please turn your watch to sync mode and turn on the transceiver (though if the transciever is already on you may have to turn it off then on again), then press enter...")
-    print("AccessPoint Started")
+    # raw_input("Please turn your watch to sync mode and turn on the transceiver (though if the transciever is already on you may have to turn it off then on again), then press enter...")
+    # print("AccessPoint Started")
     ser.read(3)
 
 
 def stopAccessPoint(ser):
     ser.write(makeByteString([0xFF, 0x09, 0x03]))
-    print("AccessPoint Stopped")
+    # print("AccessPoint Stopped")
     ser.read(3)
 
 
@@ -26,7 +25,7 @@ def getStatus(ser):
     ser.write(makeByteString([0xff, 0x00, 0x04, 0x00]))
     status = ser.read(4)
     if len(status) != 4:
-        print("Incorrect Length")
+        # print("Incorrect Length")
         return
     else:
         if status[3] == '\x00':
@@ -132,15 +131,6 @@ def aquisicao(file_name, numero_dados, filtro = 1):
 
 
 def makeByteString(arr):
-   """makeByteString function
-   
-   Args: 
-      arr (array): Array de entrada que será convertido para um novo array com tipos unsigned char
-   
-   Returns:
-      Array convertido para unsigned char.
-   
-   """
    return array.array('B', arr).tostring()
 
 

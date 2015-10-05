@@ -1,8 +1,8 @@
 __author__ = 'ginezf'
-import threading
+from threading import *
 
 
-class Thread:
+class Threadable:
 
     def __init__(self, thread_function):
         self.t = None
@@ -14,7 +14,7 @@ class Thread:
         pass
 
     def start(self):
-        self.t = threading.Thread(target=self.run)
+        self.t = Thread(target=self.run)
 
     def join(self):
         self.t.join()
