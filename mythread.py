@@ -10,11 +10,14 @@ class Threadable:
         pass
 
     def run(self):
+        print "Threadable::run - Starting thread function"
         return self.thread_function()
         pass
 
     def start(self):
+        print "Starting thread"
         self.t = Thread(target=self.run)
+        self.t.start()
 
     def join(self):
         self.t.join()

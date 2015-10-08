@@ -30,11 +30,11 @@ class Janela:
 
     def obtem_eixo(self, eixo):
         if eixo == 'x':
-            return self.x
+            return self.x[0]
         elif eixo == 'y':
-            return self.y
+            return self.y[0]
         elif eixo == 'z':
-            return self.z
+            return self.z[0]
         else:
             return []
 

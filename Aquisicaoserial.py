@@ -58,20 +58,12 @@ def getData(ser):
 def obtem_amostra(ser, amostra):
     data = getData(ser)
     if data[3] == 1:
-        amostra[0] = data[4]
-        amostra[1] = data[5]
-        amostra[2] = data[6]
+        amostra.append(data[4])
+        amostra.append(data[5])
+        amostra.append(data[6])
         return True
     else:
         return False
-
-
-def obtem_amostra(ser, amostra, timeout):
-    if True ==  obtem_amostra(ser,amostra):
-        return True
-    else:
-        return False
-
 
 def aquisicao(file_name, numero_dados, filtro = 1):
     ser = serial.Serial('/dev/ttyACM0', 115200, timeout = 1)

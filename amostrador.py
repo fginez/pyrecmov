@@ -1,4 +1,5 @@
 __author__ = 'ginezf'
+import random
 import serial
 import janela
 import log
@@ -12,7 +13,7 @@ class Amostrador(Threadable):
 
     def __init__(self, fila):
         Threadable.__init__(self, self.amostragem)
-
+        self.testMode = True
         self.estado = 0
         self.filtragem = 0
         self.fila = fila
@@ -53,7 +54,7 @@ class Amostrador(Threadable):
             return True
 
     def amostragem(self):
-
+        print "Iniciando amostragem"
         n_aq_geral  = 0
         n_aq_janela = 0
 
@@ -67,17 +68,27 @@ class Amostrador(Threadable):
         y_alta  = []
         z_alta  = []
 
-        frame_atual     = []
-        frame_n_menos_1 = []
-        frame_n_menos_2 = []
+        frame_atual     = [0, 0, 0]
+        frame_n_menos_1 = [0, 0, 0]
+        frame_n_menos_2 = [0, 0, 0]
 
         while self.estado == 1:
-            resultado = obtem_amostra(self.ser, frame_atual)
+            if self.testMode == False:
+                resultado = obtem_amostra(self.ser, frame_atual)
+            else:
+                frame_atual[0] = random.randrange(255)
+                frame_atual[1] = random.randrange(255)
+                frame_atual[2] = random.randrange(255)
+                resultado = True
+
             if resultado == True:
 
                 n_aq_geral += 1  # atualiza contador geral de amostras
 
                 self.log.escreve("Amostra: (%d %d %d)" % (frame_atual[0], frame_atual[1], frame_atual[2]), logging.DEBUG)
+
+                if (pronto == 0) & (n_aq_geral == 65):
+                    pronto = 1
 
                 if self.filtragem & n_aq_geral > 3:
                     frame_atual[0] = (frame_atual[0]+frame_n_menos_1[0]+frame_n_menos_2[0])/3
@@ -88,37 +99,35 @@ class Amostrador(Threadable):
                 frame_n_menos_2 = frame_n_menos_1
                 frame_n_menos_1 = frame_atual
 
-                if pronto == 1:
-                    n_aq_janela += 1
+                n_aq_janela += 1
 
-                    x_alta.append(frame_atual[0])
-                    y_alta.append(frame_atual[1])
-                    z_alta.append(frame_atual[2])
+                x_alta.append(frame_atual[0])
+                y_alta.append(frame_atual[1])
+                z_alta.append(frame_atual[2])
 
-                    if n_aq_janela == 64:
-                        # Concatena as partes baixa e alta para formar uma janela
-                        x = x_baixa + x_alta
-                        y = y_baixa + y_alta
-                        z = z_baixa + z_alta
+                if n_aq_janela == 64:
+                    # Concatena as partes baixa e alta para formar uma janela
+                    x = x_baixa + x_alta
+                    y = y_baixa + y_alta
+                    z = z_baixa + z_alta
 
+                    if pronto == 1:
                         # Cria um objeto janela e insere na lista
                         janela_atual = janela.Janela(128)
                         janela_atual.adiciona_amostra(x,y,z)
                         self.fila.append(janela_atual)
 
-                        # Limpa e transfere as partes
-                        del x_baixa[:]
-                        del y_baixa[:]
-                        del z_baixa[:]
-                        x_baixa = x_alta
-                        y_baixa = y_alta
-                        z_baixa = z_alta
-                        del x_alta[:]
-                        del y_alta[:]
-                        del z_alta[:]
+                    # Limpa e transfere as partes
+                    del x_baixa[:]
+                    del y_baixa[:]
+                    del z_baixa[:]
+                    x_baixa = x_alta
+                    y_baixa = y_alta
+                    z_baixa = z_alta
+                    del x_alta[:]
+                    del y_alta[:]
+                    del z_alta[:]
 
-                        n_aq_janela = 0
-                    pass
+                    n_aq_janela = 0
 
-                pass
 
