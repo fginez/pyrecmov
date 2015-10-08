@@ -11,6 +11,7 @@ from Aquisicaoserial import *
 
 class Amostrador(Threadable):
 
+<<<<<<< HEAD
     def __init__(self, fila):
         Threadable.__init__(self, self.amostragem)
         self.testMode = True
@@ -28,6 +29,17 @@ class Amostrador(Threadable):
         except:
             print "Erro na abertura da porta serial %s." % self.porta
             exit()
+=======
+    def __init__(self):
+        thread.Thread.__init__(self, self.amostragem)
+        self.ser = serial.Serial('/dev/ttyACM0', 115200, timeout = 1)
+        self.sobreposicao = 0
+        self.estado = 0
+        self.pronto = 0
+        self.dt_medio_aq = 0
+        self.f_aq = 0
+        self.t_aq = 0
+>>>>>>> 30347baafcd95fa51d111d96920aadb61c69045a
         pass
 
     def inicia(self):
@@ -47,6 +59,26 @@ class Amostrador(Threadable):
         self.join()
         pass
 
+<<<<<<< HEAD
+=======
+    def amostragem(self):
+        janela_baixa = []
+        janela_alta = []
+        n_amostras = 0
+
+        while self.estado == 1:
+            amostra = []
+            resultado = obtem_amostra(self.ser, amostra)
+            if resultado == True:
+                janela_alta.append(amostra)
+                n_amostras += 1
+
+                if n_amostras == self.sobreposicao:
+                    pass
+
+                pass
+
+>>>>>>> 30347baafcd95fa51d111d96920aadb61c69045a
     def esta_ativo(self):
         if 0 == self.estado:
             return False
