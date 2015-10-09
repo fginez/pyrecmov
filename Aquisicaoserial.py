@@ -58,9 +58,9 @@ def getData(ser):
 def obtem_amostra(ser, amostra):
     data = getData(ser)
     if data[3] == 1:
-        amostra.append(data[4])
-        amostra.append(data[5])
-        amostra.append(data[6])
+        amostra[0] = data[4]
+        amostra[1] = data[5]
+        amostra[2] = data[6]
         return True
     else:
         return False

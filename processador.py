@@ -5,6 +5,7 @@ from feature_generation import *
 class Processador:
 
     def __init__(self):
+        self.parametros_norm = carrega_parametros('classifier/features/parametros.txt')
         pass
 
     def processa(self, janela):
@@ -15,4 +16,5 @@ class Processador:
         return vetor
 
     def normaliza(self, padrao):
-        pass
+        vetor = normaliza_caracteristica(padrao, self.parametros_norm)
+        return vetor

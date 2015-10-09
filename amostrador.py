@@ -11,36 +11,25 @@ from Aquisicaoserial import *
 
 class Amostrador(Threadable):
 
-<<<<<<< HEAD
     def __init__(self, fila):
         Threadable.__init__(self, self.amostragem)
-        self.testMode = True
+        self.testMode = False   # Todo: Colocar isso num arquivo de configuracao
         self.estado = 0
         self.filtragem = 0
         self.fila = fila
         self.log = log.Log("sensor")
 
         if platform.system() == 'Windows':
-            self.porta = "COM4"  #TODO: Tornar isso configuravel via arquivo .conf
+            self.porta = "COM4"
         else:
             self.porta = '/dev/ttyACM0'
         try:
             self.ser = serial.Serial(self.porta, 115200, timeout = 1)
+        except serial.SerialException as e:
+            print e.message
         except:
             print "Erro na abertura da porta serial %s." % self.porta
             exit()
-=======
-    def __init__(self):
-        thread.Thread.__init__(self, self.amostragem)
-        self.ser = serial.Serial('/dev/ttyACM0', 115200, timeout = 1)
-        self.sobreposicao = 0
-        self.estado = 0
-        self.pronto = 0
-        self.dt_medio_aq = 0
-        self.f_aq = 0
-        self.t_aq = 0
->>>>>>> 30347baafcd95fa51d111d96920aadb61c69045a
-        pass
 
     def inicia(self):
         startAccessPoint(self.ser)
@@ -59,8 +48,6 @@ class Amostrador(Threadable):
         self.join()
         pass
 
-<<<<<<< HEAD
-=======
     def amostragem(self):
         janela_baixa = []
         janela_alta = []
@@ -78,7 +65,6 @@ class Amostrador(Threadable):
 
                 pass
 
->>>>>>> 30347baafcd95fa51d111d96920aadb61c69045a
     def esta_ativo(self):
         if 0 == self.estado:
             return False
@@ -105,6 +91,9 @@ class Amostrador(Threadable):
         frame_n_menos_2 = [0, 0, 0]
 
         while self.estado == 1:
+
+            # TODO: Precisamos de um flush aqui para nao processar amostras velhas
+
             if self.testMode == False:
                 resultado = obtem_amostra(self.ser, frame_atual)
             else:
@@ -117,7 +106,7 @@ class Amostrador(Threadable):
 
                 n_aq_geral += 1  # atualiza contador geral de amostras
 
-                self.log.escreve("Amostra: (%d %d %d)" % (frame_atual[0], frame_atual[1], frame_atual[2]), logging.DEBUG)
+                self.log.escreve("%03d|%03d|%03d|)" % (frame_atual[0], frame_atual[1], frame_atual[2]), logging.DEBUG)
 
                 if (pronto == 0) & (n_aq_geral == 65):
                     pronto = 1

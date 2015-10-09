@@ -2,12 +2,14 @@ __author__ = 'ginezf'
 import logging
 import logging.config
 import os
+import sys
 
 class Log:
 
     def __init__(self, nome_instancia):
         dir = os.getcwd()
-        logging.config.fileConfig('log.conf')
+        arquivo_conf = os.path.join(dir,'config\\log.conf')
+        logging.config.fileConfig(arquivo_conf)
         self.nome = nome_instancia
         # create logging instances
         if nome_instancia == "sensor":
@@ -15,7 +17,9 @@ class Log:
         elif nome_instancia == "features":
             self.log = logging.getLogger("features")
         elif nome_instancia == "svm":
-            self.log = logging.getLogger("features")
+            self.log = logging.getLogger("svm")
+        elif nome_instancia == "app":
+            self.log = logging.getLogger("app")
         else:
             self.log = logging.getLogger("root")
         pass

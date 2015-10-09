@@ -1,29 +1,36 @@
 __author__ = 'ginezf'
 import amostrador
 import processador
-#import classificador
+import classificador
 import padrao
 import resultado
 import registro
 
 def roda_sensor():
-    amostras = []
+    amostras = []  # lista para recebimento de amostras
+    registros =[]  # lista de armazenamento dos resultados
+
+    # Instancia objetos de execucao
     amostragem = amostrador.Amostrador(amostras)
     processamento = processador.Processador()
-    #classificacao = classificador.Classificador()
+    classificacao = classificador.Classificador()
 
     amostragem.inicia()
     if amostragem.esta_ativo():
         while True:
             if amostras:    # Verifica lista por novas amostras
-                print "Amostra recebida!"
-
                 # Cria registro para armazenar os dados
                 r = registro.Registro()
                 r.janela = amostras.pop(0)  # Inclui amostras de aceleracao x, y e z
-                r.padrao.adiciona_caracteristica(processamento.processa(r.janela))  # Extrai caracteristicas
-                r.padrao = processamento.normaliza(r.padrao)  # Normaliza
-                #r.resultado = classificacao.classifica(r.padrao)  # Classifica o padrao
+                vetor = processamento.processa(r.janela)  # Extrai caracteristicas
+                vetor = processamento.normaliza(vetor)    # Normaliza
+
+                r.padrao = padrao.Padrao(19)  # Cria objeto de padrao
+                r.padrao.adiciona_caracteristica(vetor)  # Armazena padrao gerado
+
+                r.resultado = classificacao.classifica(r.padrao)  # Classifica o padrao
+
+                registros.append(r)
                 pass
     else:
         print "Erro ao iniciar a amostragem"
