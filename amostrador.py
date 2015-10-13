@@ -92,7 +92,8 @@ class Amostrador(Threadable):
 
         while self.estado == 1:
 
-            # TODO: Precisamos de um flush aqui para nao processar amostras velhas
+            # flush para nao processar amostras velhas
+            self.ser.flushInput()
 
             if self.testMode == False:
                 resultado = obtem_amostra(self.ser, frame_atual)

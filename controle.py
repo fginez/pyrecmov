@@ -30,6 +30,12 @@ def roda_sensor():
 
                 r.resultado = classificacao.classifica(r.padrao)  # Classifica o padrao
 
+                # Exibicao do resultado
+                classe = r.resultado.obtem_classe()
+                trad_classe = classificacao.traduz_classe(classe)
+                prob_classe = (0.0, r.resultado.obtem_prob_classe())[classe < 9]
+                print "Padrao classificado> %s (Probabilidade=%02.2f)" % (trad_classe, prob_classe)
+
                 registros.append(r)
                 pass
     else:
