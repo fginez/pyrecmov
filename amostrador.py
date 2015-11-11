@@ -13,7 +13,7 @@ class Amostrador(Threadable):
 
     def __init__(self, fila):
         Threadable.__init__(self, self.amostragem)
-        self.testMode = False   # Todo: Colocar isso num arquivo de configuracao
+        self.testMode = True   # Todo: Colocar isso num arquivo de configuracao
         self.estado = 0
         self.filtragem = 0
         self.fila = fila
@@ -32,9 +32,13 @@ class Amostrador(Threadable):
             exit()
 
     def inicia(self):
-        startAccessPoint(self.ser)
-        getStatus(self.ser)
-        status = getStatus(self.ser)
+        if self.testMode == False:
+            startAccessPoint(self.ser)
+            getStatus(self.ser)
+            status = getStatus(self.ser)
+        else:
+            status = '\x03' # Fake status
+
         if status == '\x03':
             self.log.escreve("Aquisicao iniciada.", logging.DEBUG)
             self.estado = 1
