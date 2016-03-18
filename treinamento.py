@@ -1,6 +1,7 @@
 import scipy as sp
 import numpy as np
 import feature_generation as featuregen
+from sklearn.cross_validation import KFold
 
 # Formato do arquivo .dat
 # 0 file header (pular)
@@ -84,10 +85,10 @@ def extrai_janelas(grupo, classes_g, tamanho, sobreposicao):
         k+=1
     return k, janelas, classes_j
 
-#####################################################################################################
+#====================================================================================================
 # SCRIPT PARA TREINAMENTO DE MODELO DE SVM (UTILIZANDO A LIBSVM)
-#####################################################################################################
-filename = "data/sample_database/User1.dat"
+#====================================================================================================
+filename = "data/master/master.dat"
 
 # Importa o arquivo bruto de amostras
 data = importa_arquivo(filename)
@@ -134,12 +135,28 @@ for i in range(0, janelas.__len__()):
             caracteristicas = np.vstack([caracteristicas, vetor])
             classes = np.vstack([classes, classes_j[i][j]])
 
-print "Tamanho vetor caracteristicas: %d x %d" % (caracteristicas.shape[0], caracteristicas.shape[1])
+# Embaralhamento da matriz
+indices_aleatorios = np.random.permutation(caracteristicas.shape[0])
+caracteristicas = caracteristicas[indices_aleatorios, :]
+classes = classes[indices_aleatorios]
 
 # Normalizacao
 caracteristicas_n, parametros_n = featuregen.gera_normalizacao_caracteristicas(caracteristicas)
+
+# TODO: Porque chegou-se ao numero de 1287 janelas?
+# TODO: Fazer um mock com janelas conhecidas para testar o funcionamento do extrator de janelas
+print "Tamanho vetor caracteristicas: %d x %d\n" % (caracteristicas_n.shape[0], caracteristicas_n.shape[1])
+print "Parametros de normalizacao:\n"
+print parametros_n
 
 # Aqui temos:
 # vetor de entrada: caracteristicas_n
 # vetor de alvos:   classes
 
+# Preparacao do treinamento: cross-validation
+cv = KFold(len(caracteristicas_n), 5)
+for train, test in cv:
+
+    # TODO: Inserir codigo de treino e score
+
+    pass
