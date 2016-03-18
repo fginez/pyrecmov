@@ -159,6 +159,24 @@ def normaliza_caracteristica(dados, parametros):
             resultado.append(res)
         return resultado
 
+def gera_normalizacao_caracteristicas(dados):
+    parametros = []
+    dados_normalizados = dados.copy()
+
+    for i in range(0, dados.shape[1]):
+        m = numpy.mean(dados[:, i])
+        sd = numpy.std(dados[:, i], ddof=1)
+
+        for j in range(0, dados.shape[0]):
+            dados_normalizados[j, i] = (dados[j, i] - m) / sd
+        p = numpy.array([m, sd])
+        if 0 == len(parametros):
+            parametros = p
+        else:
+            parametros = numpy.vstack([parametros, p])
+
+    return dados_normalizados, parametros
+
 def obtem_janelas(sinal, tamanho_janela, sobreposicao):
         #obtem_janelas Segmenta o sinal fornecido em janelas com sobreposicao
         #Entradas:
