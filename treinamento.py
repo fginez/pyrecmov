@@ -1,7 +1,7 @@
 import scipy as sp
 import numpy as np
 import feature_generation as featuregen
-from sklearn.cross_validation import KFold
+from sklearn import svm, grid_search
 
 # Formato do arquivo .dat
 # 0 file header (pular)
@@ -44,7 +44,7 @@ def agrupa_classes(amostras, classes):
                 #grupo_amostras.append(amostras[i,:])
                 grupo_amostras = np.vstack((grupo_amostras, amostras[i, :]))
                 #classe_g.append(classes[i])
-                classe_g = np.vstack((classe_g, classes[i]))
+                classe_g = np.append(classe_g, classes[i])
 
                 # Tratamento para a ultima linha do arquivo
                 if i == (linhas-1):
@@ -66,7 +66,7 @@ def agrupa_classes(amostras, classes):
             #classe_g.append(classes[i])
             classe_g = np.array(classes[i])
 
-    print "agrupa_classes: %d grupos\n" % k
+    print "agrupa_classes: %d grupos\n" % (k+1)
     return grupos, classes_g
 
 
@@ -88,7 +88,9 @@ def extrai_janelas(grupo, classes_g, tamanho, sobreposicao):
 #====================================================================================================
 # SCRIPT PARA TREINAMENTO DE MODELO DE SVM (UTILIZANDO A LIBSVM)
 #====================================================================================================
+# TESTE FUNCIONAL DO SKLEARN SVM
 filename = "data/master/master.dat"
+#filename = "data/sample_database/window_test.dat"
 
 # Importa o arquivo bruto de amostras
 data = importa_arquivo(filename)
@@ -128,12 +130,14 @@ for i in range(0, janelas.__len__()):
         y = janelas[i][j][:, 1]
         z = janelas[i][j][:, 2]
         vetor = featuregen.vetor_caracteristicas(x,y,z, len(x))
+        c     = classes_j[i][j]
         if 0 == len(caracteristicas):
             caracteristicas = np.array([vetor])
-            classes = np.array([classes_j[i][j]])
+            classes = np.array(c)
         else:
             caracteristicas = np.vstack([caracteristicas, vetor])
-            classes = np.vstack([classes, classes_j[i][j]])
+            classes = np.append(classes, c)
+
 
 # Embaralhamento da matriz
 indices_aleatorios = np.random.permutation(caracteristicas.shape[0])
@@ -149,14 +153,21 @@ print "Tamanho vetor caracteristicas: %d x %d\n" % (caracteristicas_n.shape[0], 
 print "Parametros de normalizacao:\n"
 print parametros_n
 
+np.savez("master_array", caracteristicas, parametros_n, caracteristicas_n, classes)
+
+npzfile = np.load("master_array.npz")
+
 # Aqui temos:
 # vetor de entrada: caracteristicas_n
 # vetor de alvos:   classes
 
-# Preparacao do treinamento: cross-validation
-cv = KFold(len(caracteristicas_n), 5)
-for train, test in cv:
-
-    # TODO: Inserir codigo de treino e score
-
-    pass
+# Montagem da grade de parametros de treinamento
+tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-2, 1e-3, 1e-4, 1e-5],
+                     'C': [1, 10, 100, 1000]},
+                    {'kernel': ['linear'], 'C': [1, 10, 100, 1000]}]
+svr = svm.SVC(probability=True)
+clf = grid_search.GridSearchCV(estimator=svr, param_grid=tuned_parameters)
+clf.fit(caracteristicas_n, classes)
+print "Score obtido: " + str(clf.best_score_)
+s = clf.score(caracteristicas_n, classes)
+pass

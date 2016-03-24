@@ -4,6 +4,80 @@ import scipy.stats
 from math import log10
 from math import sqrt
 from datetime import datetime
+
+"""
+  *** Está faltando a implementação do filtro média móvel para remoção de DC ***
+  https://www.researchgate.net/publication/272085935_Accelerometer_Signal_Features_and_Classification_Algorithms_for_Positioning_Applications
+
+  * Funções de processamento intermediário
+    FFT -> calc_fft
+    Norma do sinal -> calc_normasinal
+
+  *	Feature | Portada?
+	SMA       calc_sma
+	Media     calc_media
+	D.P.      calc_dp
+	Obliq.    calc_obliq
+	Curtose   calc_curtose
+    SVM       calc_svm
+    E.M.      calc_em
+    Entropia  calc_entropia
+    Corr.C.   calc_corrcruzada
+    Var.      calc_variacao
+    S.S.Mov   calc_seqsmovimento
+    Max.F     calc_max_f
+
+  * Vetor completo de features
+  	x -> Amostras brutas do eixo "x"
+  	y -> Amostras brutas do eixo "y"
+  	z -> Amostras brutas do eixo "z"
+  	w -> Numero de amostras utilizado no janelamento
+  	n -> Sinal norma obtido pela função calc_normasinal
+
+  	00		calc_sma(x,y,z)
+  	01		calc_media(x)
+  	02		calc_media(y)
+  	03		calc_media(z)
+  	04		calc_dp(x)
+  	05		calc_dp(y)
+  	06		calc_dp(z)
+  	07		calc_obliq(x)
+  	08		calc_obliq(y)
+  	09		calc_obliq(z)
+  	10		calc_curtose(x)
+  	11		calc_curtose(y)
+  	12		calc_curtose(z)
+  	13		calc_svm(x,y,z,w)
+  	14		calc_em(x,y,z,w)
+  	15		calc_corrcruzada(x,y)
+  	16		calc_corrcruzada(x,z)
+  	17		calc_corrcruzada(y,z)
+  	18		calc_variacao(x)
+  	19		calc_variacao(y)
+  	20		calc_variacao(z)
+  	21		calc_entropia(x)
+  	22		calc_entropia(y)
+  	23		calc_entropia(z)
+  	24		[f_x] calc_max_f(x)
+  	25		[m_x]
+  	26		[f_y] calc_max_f(y)
+  	27		[m_y]
+  	28		[f_z] calc_max_f(z)
+  	29		[m_z]
+  	30		calc_seqsmovimento(x)
+  	31		calc_seqsmovimento(y)
+  	32		calc_seqsmovimento(z)
+  	33		calc_media(n)
+  	34		calc_dp(n)
+  	35		calc_obliq(n)
+  	36		calc_curtose(n)
+  	37		calc_variacao(n)
+  	38		calc_entropia(n)
+  	39		calc_seqsmovimento(n)
+
+"""
+
+
 """#para teste inicio
 #gera semper os mesmos vetores x, y, z com 128 valores de 0 a 255.
 import random
@@ -16,8 +90,35 @@ for i in range(1,129):
 	z.append(random.randrange(255))
 #para teste fim"""
 
+def filtro_media_movel(x,n):
+	x_f = []
+	for i in range(0, len(x)):
+		# Calcula o residuo
+		r = 0
+		for j in range(0, n):
+			# Protecao contra indices negativos
+			p = i - j
+			if p >= 0:
+				r += x[p]
+		r = r/n
+		x_f.append((x[i] - r))
+	return x_f
+
+def calc_normasinal(x,y,z):
+	n = []
+	for i in range(len(x)):
+		n.append(sqrt(x[i]**2 + y[i]**2 + z[i]**2))
+	return n
+
+
+def calc_corrcruzada(x,y):
+	return numpy.correlate(x,y)[0]
+
 def calc_curtose(x):
     return scipy.stats.kurtosis(x,fisher=False)
+
+def calc_obliq(x):
+	return scipy.stats.skew(x)
 
 def calc_dp(x):
     o = numpy.std(x,ddof=1)
@@ -29,24 +130,28 @@ def calc_fft(sinal, fa, N):
     return f, fx
 
 def calc_em(x,y,z,w):
-#verificar se X(i) no matlab=X(i) no python -> nao e, matlab inicia do indice 1.
-    comp = len(x)
+"""    comp = len(x)
     em = 0
 
-    f, X = calc_fft(x, 33 ,128)
+    f, X = calc_fft(x,33,128)
     f, Y = calc_fft(y,33,128)
     f, Z = calc_fft(z,33,128)
 
     X_m = 0
     Y_m = 0
     Z_m = 0
-    #for i in range(3,comp/2+2):
     for i in range(2,int(comp/2+1)):
         X_m += 2*abs(X[i])**2
         Y_m += 2*abs(Y[i])**2
         Z_m += 2*abs(Z[i])**2
     em = (X_m + Y_m + Z_m)/3
     return em
+"""
+	em = 0
+	n = calc_normasinal(x,y,z)
+	for i in range(0, len(n)):
+		em += n[i]**2
+	return em/w
 
 def calc_entropia(x):
     comp = len(x)
@@ -104,9 +209,16 @@ def calc_max_f(x):
         #como os indices do python funcionam de forma diferente, aqui o valor
         #sera 1 a menos do que no matlab, mas como e um indice, por enquanto
         #deixo assim. Dependendo do uso de f posteriormente talvez tenha que mudar
-        return f
+        return mag, f
 
 def vetor_caracteristicas(x, y, z, w):
+
+		"""
+
+		TODO: Verificar o resultado com sinais sem nível DC
+
+		"""
+
         vetor = []
         vetor.append(calc_dp(x))
         vetor.append(calc_variacao(y))
