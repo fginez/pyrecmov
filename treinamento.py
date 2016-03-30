@@ -1,6 +1,7 @@
 import scipy as sp
 import numpy as np
 import feature_generation as featuregen
+import feature_selection as featuresel
 from sklearn import svm, grid_search
 
 # Formato do arquivo .dat
@@ -85,89 +86,115 @@ def extrai_janelas(grupo, classes_g, tamanho, sobreposicao):
         k+=1
     return k, janelas, classes_j
 
+def importa_rawdata(rawdata_name):
+    Filtragem = False
+
+    # Importa o arquivo bruto de amostras
+    data = importa_arquivo(rawdata_name + ".dat")
+
+    # Extrai as matrizes de dados de interesse
+    amostras, classes = separa_vetores(data)
+
+    # Remocao de classes indesejadas (sem classificao / sem movimento definido)
+    # Sendo:
+    #        0 - Sem movimento definido
+    #        9 - Sem classe (isso e' resultado pos uso do classificador pronto)
+    amostras, classes = remove_amostras_classe(amostras, classes, 0)
+    amostras, classes = remove_amostras_classe(amostras, classes, 9)
+
+    # Agrupamento de dados conforme a classe informada no treinamento
+    grupos, classes_g = agrupa_classes(amostras, classes)
+
+    # Janelamento
+    janelas = []
+    classes_j = []
+    for i in range(0, grupos.__len__()):
+        tamanho=128
+        sobreposicao=64
+        qtd_janelas, janela, classe_j = extrai_janelas(grupos[i], classes_g[i], tamanho, sobreposicao)
+        print "grupo[%d](classe %d): %d janelas extraidas" % (i, classes_g[i][0], qtd_janelas)
+        if qtd_janelas:
+            janelas.append(janela)
+            classes_j.append(classe_j)
+
+    # Extracao de caracteristicas
+    caracteristicas = np.array([])
+    classes = np.array([])
+
+    for i in range(0, janelas.__len__()):
+        for j in range(0, janelas[i].__len__()):
+            x = janelas[i][j][:, 0]
+            y = janelas[i][j][:, 1]
+            z = janelas[i][j][:, 2]
+            vetor = featuregen.vetor_caracteristicas(x,y,z, len(x), Filtragem)
+            c     = classes_j[i][j]
+            if 0 == len(caracteristicas):
+                caracteristicas = np.array([vetor])
+                classes = np.array(c)
+            else:
+                caracteristicas = np.vstack([caracteristicas, vetor])
+                classes = np.append(classes, c)
+
+
+    # Embaralhamento da matriz
+    indices_aleatorios = np.random.permutation(caracteristicas.shape[0])
+    caracteristicas = caracteristicas[indices_aleatorios, :]
+    classes = classes[indices_aleatorios]
+
+    print "Tamanho vetor caracteristicas: %d x %d\n" % (caracteristicas.shape[0], caracteristicas.shape[1])
+    print "Tamanho vetor classes        : %d \n" % (classes.shape[0])
+
+    savefilename = rawdata_name + "_array"
+    np.savez(savefilename, caracteristicas=caracteristicas, classes=classes)
+
+def importa_arraydata(filename):
+    npzfile = np.load(filename)
+    caracteristicas = npzfile["caracteristicas"]
+    classes = npzfile["classes"]
+    return caracteristicas, classes
+
+def seleciona_caracteristicas(caracteristicas, classes):
+    caracteristicas_selecionadas = featuresel.seleciona_caracteristicas(caracteristicas, classes)
+    return caracteristicas_selecionadas
+
+def normaliza_caracteristicas(caracteristicas):
+    # Normalizacao
+    caracteristicas_n, parametros_n = featuregen.gera_normalizacao_caracteristicas(caracteristicas)
+    return caracteristicas_n, parametros_n
+
+def treina_svm(caracteristicas, classes):
+    # Montagem da grade de parametros de treinamento
+    gamma_exp = np.linspace(-15, 3, 10)
+    c_exp = np.linspace(-5, 15, 10)
+    gamma = 2**gamma_exp
+    c = 2**c_exp
+
+    #tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-2, 1e-3, 1e-4, 1e-5],
+    #                     'C': [1, 10, 100, 1000]}]
+
+    tuned_parameters = [{'kernel': ['rbf'], 'gamma': gamma,
+                        'C': c}]
+    num_caracteristicas = range(2,caracteristicas.shape[1])
+
+    for i in range(0, len(num_caracteristicas)):
+        svr = svm.SVC(probability=True)
+        clf = grid_search.GridSearchCV(estimator=svr, param_grid=tuned_parameters)
+        clf.fit(caracteristicas[:,0:num_caracteristicas[i]:1], classes)
+        print str(num_caracteristicas[i]) + " caracteristicas -> Score obtido: " + str(clf.best_score_)
+        # s = clf.score(caracteristicas, classes)
+
 #====================================================================================================
-# SCRIPT PARA TREINAMENTO DE MODELO DE SVM (UTILIZANDO A LIBSVM)
+# SCRIPT PARA TREINAMENTO DE MODELO DE SVM (UTILIZANDO A SKLEARN)
 #====================================================================================================
-# TESTE FUNCIONAL DO SKLEARN SVM
-filename = "data/master/master.dat"
-#filename = "data/sample_database/window_test.dat"
+fNovosDados = False
+filename_raw   = "data/master/master"
+filename_array = "data/master/master_array.npz"
 
-# Importa o arquivo bruto de amostras
-data = importa_arquivo(filename)
+if True == fNovosDados:
+    importa_rawdata(filename_raw)
 
-# Extrai as matrizes de dados de interesse
-amostras, classes = separa_vetores(data)
-
-# Remocao de classes indesejadas (sem classificao / sem movimento definido)
-# Sendo:
-#        0 - Sem movimento definido
-#        9 - Sem classe (isso e' resultado pos uso do classificador pronto)
-amostras, classes = remove_amostras_classe(amostras, classes, 0)
-amostras, classes = remove_amostras_classe(amostras, classes, 9)
-
-# Agrupamento de dados conforme a classe informada no treinamento
-grupos, classes_g = agrupa_classes(amostras, classes)
-
-# Janelamento
-janelas = []
-classes_j = []
-for i in range(0, grupos.__len__()):
-    tamanho=128
-    sobreposicao=64
-    qtd_janelas, janela, classe_j = extrai_janelas(grupos[i], classes_g[i], tamanho, sobreposicao)
-    print "grupo[%d](classe %d): %d janelas extraidas" % (i, classes_g[i][0], qtd_janelas)
-    if qtd_janelas:
-        janelas.append(janela)
-        classes_j.append(classe_j)
-
-# Extracao de caracteristicas
-caracteristicas = np.array([])
-classes = np.array([])
-
-for i in range(0, janelas.__len__()):
-    for j in range(0, janelas[i].__len__()):
-        x = janelas[i][j][:, 0]
-        y = janelas[i][j][:, 1]
-        z = janelas[i][j][:, 2]
-        vetor = featuregen.vetor_caracteristicas(x,y,z, len(x))
-        c     = classes_j[i][j]
-        if 0 == len(caracteristicas):
-            caracteristicas = np.array([vetor])
-            classes = np.array(c)
-        else:
-            caracteristicas = np.vstack([caracteristicas, vetor])
-            classes = np.append(classes, c)
-
-
-# Embaralhamento da matriz
-indices_aleatorios = np.random.permutation(caracteristicas.shape[0])
-caracteristicas = caracteristicas[indices_aleatorios, :]
-classes = classes[indices_aleatorios]
-
-# Normalizacao
-caracteristicas_n, parametros_n = featuregen.gera_normalizacao_caracteristicas(caracteristicas)
-
-# TODO: Porque chegou-se ao numero de 1287 janelas?
-# TODO: Fazer um mock com janelas conhecidas para testar o funcionamento do extrator de janelas
-print "Tamanho vetor caracteristicas: %d x %d\n" % (caracteristicas_n.shape[0], caracteristicas_n.shape[1])
-print "Parametros de normalizacao:\n"
-print parametros_n
-
-np.savez("master_array", caracteristicas, parametros_n, caracteristicas_n, classes)
-
-npzfile = np.load("master_array.npz")
-
-# Aqui temos:
-# vetor de entrada: caracteristicas_n
-# vetor de alvos:   classes
-
-# Montagem da grade de parametros de treinamento
-tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-2, 1e-3, 1e-4, 1e-5],
-                     'C': [1, 10, 100, 1000]},
-                    {'kernel': ['linear'], 'C': [1, 10, 100, 1000]}]
-svr = svm.SVC(probability=True)
-clf = grid_search.GridSearchCV(estimator=svr, param_grid=tuned_parameters)
-clf.fit(caracteristicas_n, classes)
-print "Score obtido: " + str(clf.best_score_)
-s = clf.score(caracteristicas_n, classes)
+caracteristicas, classes = importa_arraydata(filename_array)
+caracteristicas_n, parametros_n = normaliza_caracteristicas(caracteristicas)
+caracteristicas_selecionadas_n = seleciona_caracteristicas(caracteristicas_n, classes)
+treina_svm(caracteristicas_selecionadas_n, classes)
 pass

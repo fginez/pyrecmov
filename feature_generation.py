@@ -6,10 +6,10 @@ from math import sqrt
 from datetime import datetime
 
 """
-  *** Está faltando a implementação do filtro média móvel para remoção de DC ***
+  *** Esta faltando a implementacao do filtro media movel para remocao de DC ***
   https://www.researchgate.net/publication/272085935_Accelerometer_Signal_Features_and_Classification_Algorithms_for_Positioning_Applications
 
-  * Funções de processamento intermediário
+  * Funcoes de processamento intermediario
     FFT -> calc_fft
     Norma do sinal -> calc_normasinal
 
@@ -32,7 +32,7 @@ from datetime import datetime
   	y -> Amostras brutas do eixo "y"
   	z -> Amostras brutas do eixo "z"
   	w -> Numero de amostras utilizado no janelamento
-  	n -> Sinal norma obtido pela função calc_normasinal
+  	n -> Sinal norma obtido pela funcao calc_normasinal
 
   	00		calc_sma(x,y,z)
   	01		calc_media(x)
@@ -90,7 +90,7 @@ for i in range(1,129):
 	z.append(random.randrange(255))
 #para teste fim"""
 
-def filtro_media_movel(x,n):
+def filtro_media_movel(x, n):
 	x_f = []
 	for i in range(0, len(x)):
 		# Calcula o residuo
@@ -130,23 +130,6 @@ def calc_fft(sinal, fa, N):
     return f, fx
 
 def calc_em(x,y,z,w):
-"""    comp = len(x)
-    em = 0
-
-    f, X = calc_fft(x,33,128)
-    f, Y = calc_fft(y,33,128)
-    f, Z = calc_fft(z,33,128)
-
-    X_m = 0
-    Y_m = 0
-    Z_m = 0
-    for i in range(2,int(comp/2+1)):
-        X_m += 2*abs(X[i])**2
-        Y_m += 2*abs(Y[i])**2
-        Z_m += 2*abs(Z[i])**2
-    em = (X_m + Y_m + Z_m)/3
-    return em
-"""
 	em = 0
 	n = calc_normasinal(x,y,z)
 	for i in range(0, len(n)):
@@ -197,49 +180,164 @@ def calc_svm(x,y,z,w):
     
 def calc_max_f(x):
         f_x, X = calc_fft(x, 33, 128)
-
         magX = []
-        for i in range(len(X)):
+        ri = int(len(X)/2)-1
+        rf = int(len(X))
+        for i in range(ri, rf, 1):
                 magX.append(2*abs(X[i])**2)
-                
-        magX = magX[2:int(len(x)/2 +1)]
-        mag, f = max(magX), numpy.argmax(magX)
-        f+=3 #versao a atualizada
-        #f+=2 #versao antiga
-        #como os indices do python funcionam de forma diferente, aqui o valor
-        #sera 1 a menos do que no matlab, mas como e um indice, por enquanto
-        #deixo assim. Dependendo do uso de f posteriormente talvez tenha que mudar
-        return mag, f
 
-def vetor_caracteristicas(x, y, z, w):
+        f = int(numpy.argmax(magX))
+        mag = magX[f]
+        f = f_x[f]
 
-		"""
+        return f, mag
 
-		TODO: Verificar o resultado com sinais sem nível DC
+def calc_vetormagF(x):
+        f_x, X = calc_fft(x, 33, 128)
+        magX = []
+        ri = int(len(X)/2)-1
+        rf = int(len(X))
+        for i in range(ri, rf, 1):
+                magX.append(2*abs(X[i])**2)
+        return magX
 
-		"""
+def calc_energia_bzero(x):
+        f_x, X = calc_fft(x, 33, 128)
+        magX = []
+        ri = int(len(X)/2)-1
+        rf = int(len(X))
+        for i in range(ri, rf, 1):
+                magX.append(2*abs(X[i])**2)
 
-        vetor = []
-        vetor.append(calc_dp(x))
-        vetor.append(calc_variacao(y))
-        vetor.append(calc_entropia(x))
-        vetor.append(calc_entropia(y))
-        vetor.append(calc_em(x,y,z,w))
-        vetor.append(calc_dp(y))
-        vetor.append(calc_variacao(x))
-        vetor.append(calc_seqsmovimento(y, 5))
-        vetor.append(calc_max_f(x))
-        vetor.append(calc_svm(x,y,z,w))
-        vetor.append(calc_seqsmovimento(z, 5))
-        vetor.append(calc_seqsmovimento(x, 5))
-        vetor.append(calc_max_f(y))
-        vetor.append(calc_sma(x,y,z,w))
-        vetor.append(calc_media(z))
-        vetor.append(calc_variacao(z))
-        vetor.append(calc_dp(z))
-        vetor.append(calc_media(y))
-        vetor.append(calc_media(x))
-        return vetor
+        e = 0
+        for j in range(0, 16):
+            e += magX[j]
+
+        return e/16
+
+def calc_energia_bbaixa(x):
+        f_x, X = calc_fft(x, 33, 128)
+        magX = []
+        ri = int(len(X)/2)-1
+        rf = int(len(X))
+        for i in range(ri, rf, 1):
+                magX.append(2*abs(X[i])**2)
+
+        e = 0
+        for j in range(16, 32):
+            e += magX[j]
+
+        return e/16
+
+def calc_energia_bmedia(x):
+        f_x, X = calc_fft(x, 33, 128)
+        magX = []
+        ri = int(len(X)/2)-1
+        rf = int(len(X))
+        for i in range(ri, rf, 1):
+                magX.append(2*abs(X[i])**2)
+
+        e = 0
+        for j in range(32, 48):
+            e += magX[j]
+
+        return e/16
+
+def calc_energia_balta(x):
+        f_x, X = calc_fft(x, 33, 128)
+        magX = []
+        ri = int(len(X)/2)-1
+        rf = int(len(X))
+        for i in range(ri, rf, 1):
+                magX.append(2*abs(X[i])**2)
+
+        e = 0
+        for j in range(48, 65):
+            e += magX[j]
+
+        return e/17
+
+def vetor_caracteristicas(x, y, z, w, filtragem=False):
+    if True==filtragem:
+        x = filtro_media_movel(x, 3)
+        y = filtro_media_movel(y, 3)
+        z = filtro_media_movel(z, 3)
+
+    n = calc_normasinal(x, y, z)
+    X = calc_vetormagF(x)
+    Y = calc_vetormagF(y)
+    Z = calc_vetormagF(z)
+    f_x, m_x = calc_max_f(x)
+    f_y, m_y = calc_max_f(y)
+    f_z, m_z = calc_max_f(z)
+
+    vetor = []
+    vetor.append(calc_svm(x, y, z, w))
+    vetor.append(calc_media(x))
+    vetor.append(calc_media(y))
+    vetor.append(calc_media(z))
+    vetor.append(calc_dp(x))
+    vetor.append(calc_dp(y))
+    vetor.append(calc_dp(z))
+    vetor.append(calc_obliq(x))
+    vetor.append(calc_obliq(y))
+    vetor.append(calc_obliq(z))
+    vetor.append(calc_curtose(x))
+    vetor.append(calc_curtose(y))
+    vetor.append(calc_curtose(z))
+    vetor.append(calc_svm(x,y,z,w))
+    vetor.append(calc_em(x,y,z,w))
+    vetor.append(calc_corrcruzada(x,y))
+    vetor.append(calc_corrcruzada(x,z))
+    vetor.append(calc_corrcruzada(y,z))
+    vetor.append(calc_variacao(x))
+    vetor.append(calc_variacao(y))
+    vetor.append(calc_variacao(z))
+    vetor.append(calc_entropia(x))
+    vetor.append(calc_entropia(y))
+    vetor.append(calc_entropia(z))
+    vetor.append(f_x)
+    vetor.append(m_x)
+    vetor.append(f_y)
+    vetor.append(m_y)
+    vetor.append(f_z)
+    vetor.append(m_z)
+    vetor.append(calc_seqsmovimento(x, 5))
+    vetor.append(calc_seqsmovimento(y, 5))
+    vetor.append(calc_seqsmovimento(z, 5))
+    vetor.append(calc_media(n))
+    vetor.append(calc_dp(n))
+    vetor.append(calc_obliq(n))
+    vetor.append(calc_curtose(n))
+    vetor.append(calc_variacao(n))
+    vetor.append(calc_entropia(n))
+    vetor.append(calc_seqsmovimento(n, 5))
+    vetor.append(calc_obliq(X))
+    vetor.append(calc_obliq(Y))
+    vetor.append(calc_obliq(Z))
+    vetor.append(calc_curtose(X))
+    vetor.append(calc_curtose(Y))
+    vetor.append(calc_curtose(Z))
+    vetor.append(calc_corrcruzada(X,Y))
+    vetor.append(calc_corrcruzada(X,Z))
+    vetor.append(calc_corrcruzada(Y,Z))
+    vetor.append(calc_energia_bzero(x))
+    vetor.append(calc_energia_bzero(y))
+    vetor.append(calc_energia_bzero(z))
+    vetor.append(calc_energia_bzero(n))
+    vetor.append(calc_energia_bbaixa(x))
+    vetor.append(calc_energia_bbaixa(y))
+    vetor.append(calc_energia_bbaixa(z))
+    vetor.append(calc_energia_bbaixa(n))
+    vetor.append(calc_energia_bmedia(x))
+    vetor.append(calc_energia_bmedia(y))
+    vetor.append(calc_energia_bmedia(z))
+    vetor.append(calc_energia_bmedia(n))
+    vetor.append(calc_energia_balta(x))
+    vetor.append(calc_energia_balta(y))
+    vetor.append(calc_energia_balta(z))
+    vetor.append(calc_energia_balta(n))
+    return vetor
 
 def time_test(x,y,z,w):
         start = datetime.now()

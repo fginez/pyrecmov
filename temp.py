@@ -1,11 +1,8 @@
 import scipy as sp
 import numpy as np
 
-a = np.array([0])
-for x in range(1, 5, 1):
-    a = np.append(a, x)
+npzfile = np.load("master_array.npz")
 
-b = np.array(a.tolist())
-
+print npzfile.files
+a = npzfile[npzfile.files[0]]
 print a
-print b
