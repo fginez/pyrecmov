@@ -12,7 +12,7 @@ def seleciona_caracteristicas(vetor_caracteristicas, classes):
 		rank_considerado = rank[0:features_consideradas:1]
 		caracteristicas_selecionadas = vetor_caracteristicas[:, rank_considerado]
 
-	return caracteristicas_selecionadas
+	return caracteristicas_selecionadas, rank_considerado
 
 def conta_features_limiar(score, limiar):
 	contagem = 0

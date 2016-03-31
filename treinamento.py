@@ -2,6 +2,7 @@ import scipy as sp
 import numpy as np
 import feature_generation as featuregen
 import feature_selection as featuresel
+from sklearn.externals import joblib
 from sklearn import svm, grid_search
 
 # Formato do arquivo .dat
@@ -86,6 +87,7 @@ def extrai_janelas(grupo, classes_g, tamanho, sobreposicao):
         k+=1
     return k, janelas, classes_j
 
+
 def importa_rawdata(rawdata_name):
     Filtragem = False
 
@@ -147,20 +149,32 @@ def importa_rawdata(rawdata_name):
     savefilename = rawdata_name + "_array"
     np.savez(savefilename, caracteristicas=caracteristicas, classes=classes)
 
+
 def importa_arraydata(filename):
     npzfile = np.load(filename)
     caracteristicas = npzfile["caracteristicas"]
     classes = npzfile["classes"]
     return caracteristicas, classes
 
+
+def salva_parametros_norm(savefilename, parametros):
+    np.savez(savefilename, parametros=parametros)
+
+
+def salva_lista_selecao(savefilename, lista):
+    np.savez(savefilename, lista=lista)
+
+
 def seleciona_caracteristicas(caracteristicas, classes):
-    caracteristicas_selecionadas = featuresel.seleciona_caracteristicas(caracteristicas, classes)
-    return caracteristicas_selecionadas
+    caracteristicas_selecionadas, lista_selecao = featuresel.seleciona_caracteristicas(caracteristicas, classes)
+    return caracteristicas_selecionadas, lista_selecao
+
 
 def normaliza_caracteristicas(caracteristicas):
     # Normalizacao
     caracteristicas_n, parametros_n = featuregen.gera_normalizacao_caracteristicas(caracteristicas)
     return caracteristicas_n, parametros_n
+
 
 def treina_svm(caracteristicas, classes):
     # Montagem da grade de parametros de treinamento
@@ -168,9 +182,6 @@ def treina_svm(caracteristicas, classes):
     c_exp = np.linspace(-5, 15, 10)
     gamma = 2**gamma_exp
     c = 2**c_exp
-
-    #tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-2, 1e-3, 1e-4, 1e-5],
-    #                     'C': [1, 10, 100, 1000]}]
 
     tuned_parameters = [{'kernel': ['rbf'], 'gamma': gamma,
                         'C': c}]
@@ -183,18 +194,56 @@ def treina_svm(caracteristicas, classes):
         print str(num_caracteristicas[i]) + " caracteristicas -> Score obtido: " + str(clf.best_score_)
         # s = clf.score(caracteristicas, classes)
 
+
+def treina_svm(caracteristicas, classes, num_caracteristicas):
+    # Montagem da grade de parametros de treinamento
+    gamma_exp = np.linspace(-15, 3, 10)
+    c_exp = np.linspace(-5, 15, 10)
+    gamma = 2**gamma_exp
+    c = 2**c_exp
+
+    tuned_parameters = [{'kernel': ['rbf'], 'gamma': gamma,
+                        'C': c}]
+
+    _caracteristicas = caracteristicas[:, 0:num_caracteristicas:1]
+    svr = svm.SVC(probability=True)
+    clf = grid_search.GridSearchCV(estimator=svr, param_grid=tuned_parameters)
+    clf.fit(_caracteristicas, classes)
+    print "treina_svm() -> Score obtido: " + str(clf.best_score_)
+    return clf
+
 #====================================================================================================
 # SCRIPT PARA TREINAMENTO DE MODELO DE SVM (UTILIZANDO A SKLEARN)
 #====================================================================================================
+
 fNovosDados = False
+fVarreQtdCaracteristicas = False
+NumCaracteristicas=25
 filename_raw   = "data/master/master"
 filename_array = "data/master/master_array.npz"
+filename_model = "classifier/model/scikit-learn-svm-model.pkl"
+filename_param = "classifier/features/norm_params.npz"
+filename_featlist = "classifier/features/featuresel_list.npz"
 
 if True == fNovosDados:
     importa_rawdata(filename_raw)
 
 caracteristicas, classes = importa_arraydata(filename_array)
 caracteristicas_n, parametros_n = normaliza_caracteristicas(caracteristicas)
-caracteristicas_selecionadas_n = seleciona_caracteristicas(caracteristicas_n, classes)
-treina_svm(caracteristicas_selecionadas_n, classes)
+caracteristicas_selecionadas_n, lista_selecao = seleciona_caracteristicas(caracteristicas_n, classes)
+
+#arranja os parametros de normalizacao conforme a ordem das features
+parametros_n = parametros_n[lista_selecao]
+
+if True == fVarreQtdCaracteristicas:
+    model = treina_svm(caracteristicas_selecionadas_n, classes)
+else:
+    model = treina_svm(caracteristicas_selecionadas_n, classes, NumCaracteristicas)
+    lista_selecao = lista_selecao[0:NumCaracteristicas:1]
+
+#Salva modelo e arquivo de parametros de normalizacao
+salva_parametros_norm(filename_param, parametros_n)
+salva_lista_selecao(filename_featlist, lista_selecao)
+joblib.dump(model, filename_model)
+print "Fim do script"
 pass

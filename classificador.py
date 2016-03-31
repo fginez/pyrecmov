@@ -1,30 +1,45 @@
 __author__ = 'ginezf'
+cfgUsingLibSVM = False
+
 import resultado
 import os
 import log
 import logging
 import math
-from svmutil import *
-from svm import *
+if cfgUsingLibSVM:
+    from svmutil import *
+    from svm import *
+else:
+    from sklearn.externals import joblib
 
 class Classificador:
 
     def __init__(self):
         self.model = None
-        self.model = svm_load_model('classifier/model/pymodel.model')  # TODO: Colocar isso num arquivo de configuracao
+        if cfgUsingLibSVM:
+            self.model = svm_load_model('classifier/model/pymodel.model')  # TODO: Colocar isso num arquivo de configuracao
+        else:
+            self.model = joblib.load("classifier/model/scikit-learn-svm-model.pkl")
         self.log = log.Log("svm")
         pass
 
     def classifica(self, padrao):
         r = resultado.Resultado()
 
-        svm_result = svm_predict([0], padrao.obtem_vetor_caracteristicas(), self.model, '-b 1')
-        Classe = svm_result[0][0]
-        Acc = svm_result[1][0]
-        Prob = svm_result[2][0]
-
-        Prob_classe = Prob[self.encontra_indice(Classe)]
-        self.log.escreve("Saida SVM > Classe=%d Prob=%f" % (Classe, Prob_classe), logging.DEBUG)
+        if cfgUsingLibSVM:
+            svm_result = svm_predict([0], padrao.obtem_vetor_caracteristicas(), self.model, '-b 1')
+            Classe = svm_result[0][0]
+            Acc = svm_result[1][0]
+            Prob = svm_result[2][0]
+            Prob_classe = Prob[self.encontra_indice(Classe)]
+            self.log.escreve("Saida LibSVM > Classe=%d Prob=%f" % (Classe, Prob_classe), logging.DEBUG)
+        else:
+            Acc = 0
+            Classe = self.model.predict(padrao.obtem_vetor_caracteristicas())
+            Prob = self.model.predict_proba(padrao.obtem_vetor_caracteristicas())
+            Classe = int(Classe)
+            Prob = Prob[0]
+            Prob_classe = Prob[Classe-1]
 
         # Pos processamento da saida da SVM
         Pos_Classe = self.pos_classificacao(Classe, Prob)
@@ -51,17 +66,15 @@ class Classificador:
         pass
 
     def pos_classificacao(self, classe, vetor_prob):
-
-        limiar = 0.50
-		  
         # TODO: Elaborar melhores regras de pos processamento
-        Prob_classe = vetor_prob[self.encontra_indice(classe)]
-
+        limiar = 0.50
+        if cfgUsingLibSVM:
+            Prob_classe = vetor_prob[self.encontra_indice(classe)]
+        else:
+            Prob_classe = vetor_prob[classe-1]
         if Prob_classe < limiar:
             classe = 9 # Nao reconhecido
-
         self.log.escreve("Saida Pos_Classe > Classe=%d Prob=%f (limiar=%f)" % (classe, Prob_classe, limiar), logging.DEBUG)
-				
         return classe
 
     def traduz_classe(self, classe):
@@ -83,4 +96,3 @@ class Classificador:
             return "Trabalhando no computador"
         else:
             return "---"
-

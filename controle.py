@@ -6,6 +6,10 @@ import padrao
 import resultado
 import registro
 
+#NumCaracteristicas = 19
+NumCaracteristicas = 25
+
+
 def roda_sensor():
     amostras = []  # lista para recebimento de amostras
     registros =[]  # lista de armazenamento dos resultados
@@ -25,7 +29,7 @@ def roda_sensor():
                 vetor = processamento.processa(r.janela)  # Extrai caracteristicas
                 vetor = processamento.normaliza(vetor)    # Normaliza
 
-                r.padrao = padrao.Padrao(19)  # Cria objeto de padrao
+                r.padrao = padrao.Padrao(NumCaracteristicas)  # Cria objeto de padrao
                 r.padrao.adiciona_caracteristica(vetor)  # Armazena padrao gerado
 
                 r.resultado = classificacao.classifica(r.padrao)  # Classifica o padrao

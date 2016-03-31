@@ -8,12 +8,13 @@ import logging
 from mythread import *
 from Aquisicaoserial import *
 
+cfgTestMode = False
 
 class Amostrador(Threadable):
 
     def __init__(self, fila):
         Threadable.__init__(self, self.amostragem)
-        self.testMode = True   # Todo: Colocar isso num arquivo de configuracao
+        self.testMode = cfgTestMode   # Todo: Colocar isso num arquivo de configuracao
         self.estado = 0
         self.filtragem = 0
         self.fila = fila
@@ -155,5 +156,3 @@ class Amostrador(Threadable):
                     del z_alta[:]
 
                     n_aq_janela = 0
-
-

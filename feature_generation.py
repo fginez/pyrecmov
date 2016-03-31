@@ -356,12 +356,23 @@ def carrega_parametros(arquivo):
         param = [md,dp]
         parametros.append(param)
     return parametros
-    
+
+
+def importa_parametros(arquivo):
+    npzfile = numpy.load(arquivo)
+    parametros = npzfile["parametros"]
+    return parametros
+
+
+def importa_listacaracteristicas(arquivo):
+    npzfile = numpy.load(arquivo)
+    lista = npzfile["lista"]
+    return lista
+
+
 def normaliza_caracteristica(dados, parametros):
         l = len(dados)
         resultado = []
-        #m = numpy.mean(dados,axis=0)
-        #dp = numpy.std(dados,ddof=1)
         for i in range(l):
             m = parametros[i][0]
             dp = parametros[i][1]
