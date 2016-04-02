@@ -1,0 +1,7 @@
+A execução da aplicação pode ser feita a partir de diferentes perfis:
+
+I - Treinamento de um modelo
+Entrypoint: treinamento.py
+
+II - Execução de um modelo
+Entrypoint: controle.py
